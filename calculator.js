@@ -1,7 +1,7 @@
 let currentNum = '';
 let currentOperation = '';
 let mostRecentResult = '';
-
+let buttons = '-^789/456*1230.+Enter';
 
 const acButton = document.getElementById('ac');
 const ceButton = document.getElementById('ce');
@@ -51,7 +51,6 @@ negativeButton.addEventListener('click', function() {
             let operatorIndex = getOperatorIndex(currentOperation);
             currentOperation = currentOperation.substring(0, operatorIndex+1) + currentNum;
         }
-        console.log(currentOperation);
         upperDisplay.textContent = currentOperation;
         numberDisplay.textContent = currentNum;
     }
@@ -59,13 +58,60 @@ negativeButton.addEventListener('click', function() {
 })
 
 numbers.forEach(button => button.addEventListener('click', function() {
-    if((currentNum <= 9.999999 * Math.pow(10, 10) && currentNum.length <= 12) || currentNum == '-') {
+    if((currentNum <= 9.999999 * Math.pow(10, 10) && currentNum.length <= 12) 
+    || currentNum == '-' || currentNum == '.') {
         currentNum += button.textContent;
         currentOperation += button.textContent;
         numberDisplay.textContent = currentNum;
         upperDisplay.textContent += button.textContent;
     }
 }));
+
+window.addEventListener('keydown', function(e) {
+    console.log(e.key)
+    if(e.key == 'Backspace') {
+        currentNum = currentNum.substring(0, currentNum.length-1);
+        if(!includesOperation(currentOperation)) {
+            //it must be the first number
+            currentOperation = currentNum;
+        }
+        else {
+            let operatorIndex = getOperatorIndex(currentOperation);
+            currentOperation = currentOperation.substring(0, operatorIndex+1) + currentNum;
+        }
+        upperDisplay.textContent = currentOperation;
+        numberDisplay.textContent = currentNum;
+    }
+
+    if(buttons.includes(e.key)) {
+        if('123456789.'.includes(e.key)) {
+            if((currentNum <= 9.999999 * Math.pow(10, 10) && currentNum.length <= 12) 
+            || currentNum == '-' || currentNum == '.') {
+                currentNum += e.key;
+                currentOperation += e.key;
+                numberDisplay.textContent = currentNum;
+                upperDisplay.textContent += e.key;
+            }
+        }
+        else if('^*-+/'.includes(e.key)) {
+            if(currentOperation.length > getOperatorIndex(currentOperation)) {
+                //there must be a number after the operation
+                evaluate();
+                upperDisplay.textContent += ' ' + e.key+ ' ';
+                currentOperation += e.key;
+            }
+            else {
+                //it is only a single number
+                upperDisplay.textContent += ' ' + e.key + ' ';
+                currentOperation += e.key;
+                currentNum = '';
+            } 
+        }
+        else {
+            evaluate()
+        }
+    }
+});
 
 operators.forEach(button => button.addEventListener('click', function() {
     if(currentOperation.length > getOperatorIndex(currentOperation)) {
@@ -80,7 +126,6 @@ operators.forEach(button => button.addEventListener('click', function() {
         currentOperation += this.textContent;
         currentNum = '';
     }   
-
 }));
 
 decimalButton.addEventListener('click', function() {
@@ -92,9 +137,7 @@ decimalButton.addEventListener('click', function() {
     }
 })
 
-equals.addEventListener('click', function() {
-    evaluate();
-});
+equals.addEventListener('click', evaluate);
 
 function add(a, b) {
     return parseFloat(a)+parseFloat(b);
@@ -130,15 +173,16 @@ function operate(a, b, operator) {
         return add(a, b);
     else if(operator == '−')
         return subtract(a, b);
-    else if(operator == '×')
+    else if(operator == '×' || operator =='*')
         return multiply(a, b);
-    else if(operator == '÷')
+    else if(operator == '÷' || operator == '/')
         return divide(a, b);
     else if(operator == '^')
         return power(a, b);
     else
         return root(a, 2);
 }
+
 function evaluate() {
     console.log('Operation: ' + currentOperation);
     let operatorIndex = getOperatorIndex(currentOperation);
@@ -152,7 +196,7 @@ function evaluate() {
         let resultString = '' + result;
         currentOperation = resultString;
 
-        if(resultString.length >= 10) {
+        if(resultString.length >= 9) {
             result = roundNumber(result, 7);
         }
 
@@ -170,7 +214,8 @@ function evaluate() {
 function notOperation(character) {
     return character !== '+' && character !== '−' &&
            character !== '×' && character !== '÷' &&
-           character !== '^' && character !== '√';
+           character !== '^' && character !== '√' &&
+           character !== '*' && character !== '/';
 }
 
 function getOperatorIndex(operationString) {
@@ -189,7 +234,8 @@ function getOperatorIndex(operationString) {
 function includesOperation(operationString) {
     return operationString.includes('+') || operationString.includes('-') ||
            operationString.includes('×') || operationString.includes('÷') ||
-           operationString.includes('^') || operationString.includes('√');
+           operationString.includes('^') || operationString.includes('√') ||
+           operationString.includes('*') || operationString.includes('/');
 }
 
 function roundNumber(number, decimalPlaces) {
